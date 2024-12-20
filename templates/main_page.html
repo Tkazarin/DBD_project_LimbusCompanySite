@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Лимбусси Компусси{% endblock %}
+
+{% block content %}
+
+   <div class="container mt-4">
+    <div class="row">
+      <!-- Секция 1: E.G.O. -->
+      <div class="col-md-6">
+        <h3 class="text-center">E.G.O.</h3>
+        <div class="row row-cols-1 g-3">
+          {% for ego_item in ego %}
+          <div class="col">
+            <div class="card">
+              <div class="card-header">{{ ego_item.ego_title }}</div>
+              <div class="card-body">
+                <h5 class="card-title">{{ ego_item.name }}</h5>
+                <p class="card-text"><strong>Level:</strong> {{ ego_item.ego_level }}</p>
+                {% if ego_item.file %}
+                    <img src="{{ ego_item.file }}" alt="E.G.O. image" class="img-fluid">
+                {% else %}
+                    <div class="placeholder">Placeholder</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Секция 2: Identities -->
+      <div class="col-md-6">
+        <h3 class="text-center">Идентичности</h3>
+        <div class="row row-cols-1 g-3">
+          {% for identity_item in identity %}
+          <div class="col">
+            <div class="card">
+              <div class="card-header">{{ identity_item.id_title }}</div>
+              <div class="card-body">
+                <h5 class="card-title">{{ identity_item.name }}</h5>
+                <p class="card-text"><strong>Редкость:</strong> {{ identity_item.id_rarity }}</p>
+                {% if identity_item.file %}
+                    <img src="{{ identity_item.file }}" alt="Sinner image" class="img-fluid">
+                {% else %}
+                    <div class="placeholder">Placeholder</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="row mt-4">
+      <!-- Секция 3: Sinners -->
+      <div class="col-lg-6">
+        <h3 class="text-center">Грешники</h3>
+        <div id="sinnersCarousel" class="carousel slide" data-bs-ride="carousel">
+          <div class="carousel-inner">
+            {% for sinner_item in sinners %}
+
+            <div class="carousel-item {% if loop.index == 1 %}active{% endif %}">
+              <div class="card" style="width: 60%; height: 675px; margin: 0 auto">
+                <div class="card-header">{{ sinner_item.name }} ({{ sinner_item.nick }})</div>
+                <div class="card-body">
+                  <p class="card-text"><strong>Source:</strong> {{ sinner_item.source_title }}</p>
+                  <p class="card-text"><strong>Author:</strong> {{ sinner_item.source_author }}</p>
+                  {% if sinner_item.file %}
+                      <img src="{{ sinner_item.file }}" alt="Image" class="img-fluid">
+                  {% else %}
+                      <div class="an_placeholder">Placeholder</div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#sinnersCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#sinnersCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Секция 4: Characters -->
+      <div class="col-lg-6">
+        <h3 class="text-center">Персонажи</h3>
+        <div id="charactersCarousel" class="carousel slide" data-bs-ride="carousel">
+          <div class="carousel-inner">
+            {% for character in characters %}
+            <div class="carousel-item {% if loop.index == 1 %}active{% endif %}">
+              <div class="card" style="width: 60%; height: 675px; margin: 0 auto">
+                <div class="card-header">{{ character.name }}</div>
+                <div class="card-body">
+                  {% if character.source_title and character.source_author %}
+                  <p class="card-text"><strong>Source:</strong> {{ character.source_title }}</p>
+                  <p class="card-text"><strong>Author:</strong> {{ character.source_author }}</p>
+                  {% if character.file %}
+                      <img src="{{ character.file }}" alt="Character Image" class="img-fluid">
+                  {% else %}
+                      <div class="an_placeholder">Placeholder</div>
+                  {% endif %}
+                  {% else %}
+                  <p class="card-text"></p>
+                  {% if character.file %}
+                      <img src="{{ character.file }}" alt="Character Image" class="img-fluid">
+                  {% else %}
+                      <div class="an_placeholder">Placeholder</div>
+                  {% endif %}
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#charactersCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#charactersCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

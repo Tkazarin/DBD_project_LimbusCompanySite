@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Identities</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #2c2c34;
+            color: white;
+        }
+        .btn-gold {
+            background-color: #f1c40f;
+            color: #000;
+        }
+        .btn-gold:hover {
+            background-color: #dfa307;
+        }
+        .btn-red {
+            background-color: #bc0101;
+            color: white;
+        }
+        .btn-red:hover {
+            background-color: #6b0000;
+        }
+        .card-container img {
+            object-fit: cover;
+            width: 100%;
+            height: 200px;
+        }
+        .card {
+            background-color: #8b0000; /* Тёмно-красная карточка */
+            color: #f1c40f; /* Текст внутри карточки — золотой */
+        }
+        .card-title, .form-label {
+            color: #f1c40f; /* Золотой заголовок */
+        }
+        .placeholder {
+          width: 100%;
+          height: 180px;
+          background-color: #333;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #f1c40f; /* Золотой */
+          font-size: 18px;
+          font-weight: bold;
+      }
+    </style>
+</head>
+<body>
+{% include 'header.html' %}
+    <div class="container my-5">
+        <!-- Верхняя секция -->
+        <div class="mb-4">
+            <button class="btn btn-gold" data-bs-toggle="collapse" data-bs-target="#addForm">Добавить идентичность</button>
+            <div id="addForm" class="collapse mt-3">
+                <form id="addIdentityForm">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="title" class="form-label">Название идентичности:</label>
+                            <input type="text" id="title" name="title" class="form-control" minlength="5" maxlength="50" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="sinner" class="form-label">Персона:</label>
+                            <select id="sinner" name="sinner" class="form-select" required>
+                                <option value="" selected disabled>Выберите персонажа</option>
+                                <option>Yi Sang</option>
+                                <option>Faust</option>
+                                <option>Don Quixote</option>
+                                <option>Ryoshu</option>
+                                <option>Meursault</option>
+                                <option>Hong Lu</option>
+                                <option>Heathcliff</option>
+                                <option>Ishmael</option>
+                                <option>Rodion</option>
+                                <option>Sinclair</option>
+                                <option>Outis</option>
+                                <option>Gregor</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="rarity" class="form-label">Редкость:</label>
+                            <select id="rarity" name="rarity" class="form-select" required>
+                                <option value="0">0</option>
+                                <option value="00">00</option>
+                                <option value="000">000</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label for="file" class="form-label">URL изображения (необязательно):</label>
+                            <input type="url" id="file" name="file" class="form-control" maxlength="256">
+                        </div>
+                        <div class="col-md-12">
+                            <button type="submit" class="btn btn-gold">Добавить</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Список идентичностей -->
+        <div id="identitiesList" class="row">
+            {% for id in identity %}
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-end">
+                            <button class="btn btn-sm btn-red me-2" onclick="deleteIdentity('{{ id.id_title }}', '{{ id.name }}', '{{ id.id_rarity }}')">Удалить</button>
+                            <button class="btn btn-sm btn-gold" onclick="editIdentity('{{ id.id_title }}', '{{ id.name }}')">Редактировать</button>
+                        </div>
+                        <div class="card-container mt-3">
+                            {% if id.file %}
+                                <img src="{{ id.file }}" alt="EGO image" class="img-fluid">
+                            {% else %}
+                                <div class="placeholder">Placeholder</div>
+                            {% endif %}
+                        </div>
+                        <h5 class="card-title mt-3 text-center">{{ id.id_title }}</h5>
+                        <p class="text-center">Имя: <strong>{{ id.name }}</strong></p>
+                        <p class="text-center">Редкость: <strong>{{ id.id_rarity }}</strong></p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Модальное окно для редактирования -->
+    <div class="modal fade" id="editIdentityModal" tabindex="-1" aria-labelledby="editIdentityModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editIdentityModalLabel">Редактирование идентичности</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editIdentityForm">
+                        <input type="hidden" id="edit-id-title">
+                        <div class="mb-3">
+                            <label for="edit-title" class="form-label">Название идентичности:</label>
+                            <input type="text" id="edit-title" name="title" class="form-control" minlength="5" maxlength="50" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-sinner" class="form-label">Имя грешника:</label>
+                            <select id="edit-sinner" name="sinner" class="form-select" required>
+                                <option value="" selected disabled>Выберите персонажа</option>
+                                <option>Yi Yang</option>
+                                <option>Faust</option>
+                                <option>Don Quixote</option>
+                                <option>Ryoshu</option>
+                                <option>Meursault</option>
+                                <option>Hong Lu</option>
+                                <option>Heathcliff</option>
+                                <option>Ishmael</option>
+                                <option>Rodion</option>
+                                <option>Sinclair</option>
+                                <option>Outis</option>
+                                <option>Gregor</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-rarity" class="form-label">Редкость:</label>
+                            <select id="edit-rarity" name="rarity" class="form-select" required>
+                                <option value="0">0</option>
+                                <option value="00">00</option>
+                                <option value="000">000</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-file" class="form-label">URL изображения:</label>
+                            <input type="url" id="edit-file" name="file" class="form-control" maxlength="256">
+                        </div>
+                        <button type="submit" class="btn btn-gold">Сохранить изменения</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Подключение Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Логика взаимодействия -->
+    <script>
+        document.getElementById("addIdentityForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const identity = Object.fromEntries(formData);
+
+            const response = await fetch("/add_id", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(identity),
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+                location.reload(); // Обновляем страницу
+            } else {
+                alert("Ошибка добавления!");
+            }
+        });
+
+        function deleteIdentity(title, name, rarity) {
+            if (confirm("Вы уверены, что хотите удалить идентичность?")) {
+                        console.log("Имя:", name);
+                        console.log("Заголовок:", title);
+
+
+                fetch(`/delete_id`, {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ sinner: name, title: title, rarity: rarity, file: "" }),
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log(JSON.stringify({ sinner: name, title: title, rarity: rarity }));
+                    alert(data.message);
+                    location.reload();
+                })
+                .catch(() => alert("Ошибка удаления!"));
+            }
+        }
+
+
+
+        function editIdentity(title, sinner) {
+            // Открыть модальное окно
+            const modal = new bootstrap.Modal(document.getElementById("editIdentityModal"));
+            modal.show();
+            const items = JSON.parse('{{ identity | tojson }}');
+            const item = items.find(item => item.id_title === title && item.name === sinner)
+
+            document.getElementById("edit-title").value = item.id_title;
+            document.getElementById("edit-sinner").value = item.name;
+            document.getElementById("edit-rarity").value = item.id_rarity;
+            document.getElementById("edit-file").value = item.file || "";
+
+            document.getElementById("editIdentityForm").dataset.oldIdentity = JSON.stringify({
+            title: item.id_title,
+            sinner: item.name,
+            rarity: item.id_rarity,
+            file: item.file || ""
+    });
+
+        }
+
+        document.getElementById("editIdentityForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const updatedIdentity = Object.fromEntries(formData);
+
+            const oldIdentity = JSON.parse(e.target.dataset.oldIdentity);
+            let identity = {
+                identity_old: oldIdentity,
+                identity_new: updatedIdentity
+            };
+
+            const response = await fetch("/update_id", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(identity),
+            });
+            console.log(identity)
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert("Ошибка обновления!");
+            }
+        });
+
+    </script>
+</body>
+</html>

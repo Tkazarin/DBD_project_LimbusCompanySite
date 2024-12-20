@@ -1,12 +1,299 @@
-{% extends "base.html" %}
+<html>
+<head>
+  <base href="https://demos.telerik.com/kendo-ui/treeview/filter-treeview-in-dialog">
+  <style>html { font-size: 14px; font-family: Arial, Helvetica, sans-serif; }</style>
+  <title></title>
+  <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2017.2.621/styles/kendo.common-material.min.css" />
+  <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2017.2.621/styles/kendo.material.min.css" />
+  <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2017.2.621/styles/kendo.material.mobile.min.css" />
 
-{% block title %}Статьи{% endblock %}
-
-{% block content %}
-    <h2>Список статей</h2>
+  <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+  <script src="https://kendo.cdn.telerik.com/2017.2.621/js/kendo.all.min.js"></script>
+  <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2017.2.621/styles/kendo.common.min.css">
+  <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2017.2.621/styles/kendo.rtl.min.css">
+  <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2017.2.621/styles/kendo.default.min.css">
+  <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2017.2.621/styles/kendo.mobile.all.min.css">
+  <script src="https://kendo.cdn.telerik.com/2017.2.621/js/angular.min.js"></script>
+  <script src="https://kendo.cdn.telerik.com/2017.2.621/js/jszip.min.js"></script>
+</head>
+<body>
+<h2>Список книг</h2>
     <ul>
-        {% for article in articles %}
-            <li>{{ article.title }}: {{ article.content }}</li>
+        {% for s in source %}
+            <li>{{ s.author }}: {{ s.title }}</li>
         {% endfor %}
     </ul>
-{% endblock %}
+<div id="example">
+  <div class="demo-section k-content">
+    <div id="dialog">
+      <div class="dialogContent">
+        <input id="filterText" type="text" placeholder="Search categories" />
+          <span id="result">0 categories selected</span>
+        <div id="treeview"></div>
+      </div>
+    </div>
+    <select id="multiselect"></select>
+    <br />
+    <button id="openWindow" class="k-primary">SELECT CATEGORIES</button>
+  </div>
+  <script>
+    var myDataSource = new kendo.data.HierarchicalDataSource({
+      data: [{
+        id: 1, text: "Author", expanded: true, items: [
+            { id: 28, text: "Kim Hae-Gyeong" },
+              { id: 3, text: "Goethe" },
+              { id: 4, text: "Miguel de Cervante" },
+              { id: 5, text: "Ryunosuke Akutagawa" },
+              { id: 6, text: "Albert Camus" },
+              { id: 7, text: "Cao Xueqin" },
+              { id: 8, text: "Emily Bronte" },
+              { id: 9, text: "Herman Melville" },
+              { id: 10, text: "Fyodor Dostoyevsky" },
+              { id: 11, text: "Dante Alighieri" },
+              { id: 12, text: "Hermann Hesse" },
+              { id: 13, text: "Homer" },
+              { id: 14, text: "Franz Kafka" }
+        ]
+      },
+        {
+          id: 28, text: "Title", expanded: true, items: [
+            { id: 16, text: "The Wings" },
+              { id: 17, text: "Faust" },
+              { id: 18, text: "The Ingenious Gentleman Don Quixote of La Mancha" },
+              { id: 19, text: "Hell Screen" },
+              { id: 20, text: "The Stranger" },
+              { id: 21, text: "Dream of the Red Chamber" },
+              { id: 22, text: "Wuthering Heights" },
+              { id: 23, text: "Moby-Dick or The Whale" },
+              { id: 24, text: "Crime and Punishment" },
+              { id: 25, text: "The Divine Comedy" },
+              { id: 26, text: "Demian: The Story of A Boyhood" },
+              { id: 27, text: "The Odyssey" },
+              { id: 28, text: "The Metamorphosis" }
+          ]
+        }
+      ]
+    });
+
+    $("#multiselect").kendoMultiSelect({
+      dataTextField: "text",
+      dataValueField: "id"
+    });
+
+    $("#treeview").kendoTreeView({
+      checkboxes: {
+        checkChildren: true
+      },
+      dataSource: myDataSource,
+      check: onCheck,
+      expand: onExpand
+    });
+
+    $(document).ready(function () {
+      var dialog = $("#dialog");
+      var multiSelect = $("#multiselect").data("kendoMultiSelect");
+      $("#openWindow").kendoButton();
+
+      multiSelect.readonly(true);
+
+      $("#openWindow").click(function () {
+        dialog.data("kendoDialog").open();
+        $(this).fadeOut();
+      });
+
+      dialog.kendoDialog({
+        width: "400px",
+        title: "Categories",
+        visible: false,
+        actions: [
+          {
+            text: 'Cancel',
+            primary: false,
+            action: onCancelClick
+          },
+          {
+            text: 'Ok',
+            primary: true,
+            action: onOkClick
+          }
+        ],
+        close: onClose
+      }).data("kendoDialog").open();
+    });
+
+    function onCancelClick(e) {
+      e.sender.close();
+    }
+
+    function onOkClick(e) {
+    var checkedNodes = [];
+    var treeView = $("#treeview").data("kendoTreeView");
+    getCheckedNodes(treeView.dataSource.view(), checkedNodes);
+
+    var selectedTexts = checkedNodes.map(function(node) {
+        return node.text;
+    });
+
+    fetch('http://localhost:8000/', { // Измените на ваш URL
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ selected_categories: selectedTexts }) // Отправляем текстовые значения
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Успех:', data);
+        alert("Данные успешно отправлены на сервер!");
+    })
+    .catch((error) => {
+        console.error('Ошибка:', error);
+        alert("Произошла ошибка при отправке данных на сервер.");
+    });
+
+    populateMultiSelect(checkedNodes);
+    e.sender.close();
+}
+
+    function onClose() {
+      $("#openWindow").fadeIn();
+    }
+
+    function populateMultiSelect(checkedNodes) {
+      var multiSelect = $("#multiselect").data("kendoMultiSelect");
+      multiSelect.dataSource.data([]);
+
+      var multiData = multiSelect.dataSource.data();
+      if (checkedNodes.length > 0) {
+        var array = multiSelect.value().slice();
+        for (var i = 0; i < checkedNodes.length; i++) {
+          multiData.push({ text: checkedNodes[i].text, id: checkedNodes[i].id });
+          array.push(checkedNodes[i].id.toString());
+        }
+
+        multiSelect.dataSource.data(multiData);
+        multiSelect.dataSource.filter({});
+        multiSelect.value(array);
+      }
+    }
+
+
+
+
+    function getCheckedNodes(nodes, checkedNodes) {
+      var node;
+
+      for (var i = 0; i < nodes.length; i++) {
+        node = nodes[i];
+
+        if (node.checked) {
+          checkedNodes.push({ text: node.text, id: node.id });
+        }
+
+        if (node.hasChildren) {
+          getCheckedNodes(node.children.view(), checkedNodes);
+        }
+      }
+    }
+
+    function onCheck() {
+      var checkedNodes = [];
+      var treeView = $("#treeview").data("kendoTreeView");
+
+      getCheckedNodes(treeView.dataSource.view(), checkedNodes);
+      setMessage(checkedNodes.length);
+    }
+
+    function onExpand(e) {
+      if ($("#filterText").val() == "") {
+        $(e.node).find("li").show();
+      }
+    }
+
+    function setMessage(checkedNodes) {
+      var message;
+
+      if (checkedNodes > 0) {
+        message = checkedNodes + " categories selected";
+      }
+      else {
+        message = "0 categories selected";
+      }
+
+      $("#result").html(message);
+    }
+
+    $("#filterText").keyup(function (e) {
+      var filterText = $(this).val();
+
+      if (filterText !== "") {
+        $(".selectAll").css("visibility", "hidden");
+
+        $("#treeview .k-group .k-group .k-in").closest("li").hide();
+        $("#treeview .k-group").closest("li").hide();
+        $("#treeview .k-group .k-group .k-in:contains(" + filterText + ")").each(function () {
+          $(this).parents("ul, li").each(function () {
+            var treeView = $("#treeview").data("kendoTreeView");
+            treeView.expand($(this).parents("li"));
+            $(this).show();
+          });
+        });
+        $("#treeview .k-group .k-in:contains(" + filterText + ")").each(function () {
+          $(this).parents("ul, li").each(function () {
+            $(this).show();
+          });
+        });
+      }
+      else {
+        $("#treeview .k-group").find("li").show();
+        var nodes = $("#treeview > .k-group > li");
+
+        $.each(nodes, function (i, val) {
+          if (nodes[i].getAttribute("data-expanded") == null) {
+            $(nodes[i]).find("li").hide();
+          }
+        });
+
+        $(".selectAll").css("visibility", "visible");
+      }
+    });
+  </script>
+  <style>
+    html .k-dialog .k-window-titlebar {
+      padding-left: 17px;
+    }
+
+    .k-dialog .k-content {
+      padding: 17px;
+    }
+
+    #filterText {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 6px;
+      border-radius: 3px;
+      border: 1px solid #d9d9d9;
+    }
+
+    #result {
+      color: #9ca3a6;
+      float: right;
+    }
+
+    #treeview {
+      height: 300px;
+      overflow-y: auto;
+      border: 1px solid #d9d9d9;
+    }
+
+    #openWindow {
+      min-width: 180px;
+    }
+
+    .k-multiselect .k-icon.k-i-close {
+      display: none;
+    }
+  </style>
+</div>
+</body>
+</html>

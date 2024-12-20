@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список идентичностей</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #2c2c34;
+            color: #f1c40f;
+        }
+        .card {
+            background-color: #8b0000;
+            color: #f1c40f;
+        }
+        .card-title, .form-label {
+            color: #f1c40f;
+        }
+        .btn-primary {
+            background-color: #f1c40f;
+            border-color: #f1c40f;
+            color: #2c2c34;
+        }
+        .btn-primary:hover {
+            background-color: #8b0000;
+            border-color: #8b0000;
+            color: #f1c40f;
+        }
+        select, option {
+            background-color: #2c2c34;
+            color: #f1c40f;
+        }
+        .card img {
+            max-height: 200px;
+            object-fit: cover;
+        }
+
+        .has-selected {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+    </style>
+</head>
+<body>
+    {% include 'header.html' %}
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Фильтрация</h5>
+                        <form id="filter-form" class="row g-3">
+                            <div class="col-md-6">
+                                <label for="sinner" class="form-label">Выберите Sinner</label>
+                                <select id="sinner" name="sinner" multiple class="form-select">
+                                    <option value="Yi Sang">Yi Sang</option>
+                                    <option value="Faust">Faust</option>
+                                    <option value="Don Quixote">Don Quixote</option>
+                                    <option value="Ryoshu">Ryoshu</option>
+                                    <option value="Meursault">Meursault</option>
+                                    <option value="Hong Lu">Hong Lu</option>
+                                    <option value="Heathcliff">Heathcliff</option>
+                                    <option value="Ishmael">Ishmael</option>
+                                    <option value="Rodion">Rodion</option>
+                                    <option value="Sinclair">Sinclair</option>
+                                    <option value="Outis">Outis</option>
+                                    <option value="Gregor">Gregor</option>
+                                </select>
+                                <small class="form-text text-muted" style="color: #f1c40f;">Можно выбрать несколько.</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="rarity" class="form-label">Выберите Rarity</label>
+                                <select id="rarity" name="rarity" multiple class="form-select">
+                                    <option value="0">0</option>
+                                    <option value="00">00</option>
+                                    <option value="000">000</option>
+                                </select>
+                                <small class="form-text text-muted" style="color: #f1c40f;">Можно выбрать несколько.</small>
+                            </div>
+                            <div class="col-12">
+                                <button type="button" id="filter-btn" class="btn btn-primary">Применить фильтр</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="row" id="cards-container">
+        </div>
+
+        {% if user_type == 2 %}
+        <div class="row">
+            <div class="col-12">
+                <a href="/id_list/edit" class="btn btn-custom">Панель редактирования списка идентичностей</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+    const sinnerSelect = document.getElementById("sinner");
+    const raritySelect = document.getElementById("rarity");
+    const filterBtn = document.getElementById("filter-btn");
+    const cardsContainer = document.getElementById("cards-container");
+
+    async function loadCards(filters = {}) {
+        try {
+            const queryParams = new URLSearchParams(filters);
+            const response = await fetch(`/sinners?${queryParams.toString()}`);
+            const sinners = await response.json();
+
+            cardsContainer.innerHTML = "";
+
+            if (sinners.length === 0) {
+                cardsContainer.innerHTML = '<p class="text-center" style="color: #f1c40f;">Нет данных по заданным фильтрам.</p>';
+                return;
+            }
+
+            sinners.forEach(sinner => {
+                const card = document.createElement("div");
+                card.className = "col-md-4 mb-4";
+                card.innerHTML = `
+                    <div class="card">
+                        <img src="${sinner.file || 'https://via.placeholder.com/150'}" class="card-img-top" alt="Image">
+                        <div class="card-body">
+                            <h5 class="card-title">${sinner.id_title}</h5>
+                            <p class="card-text">Имя: <strong>${sinner.name}</strong></p>
+                            <p class="card-text">Rarity: <strong>${sinner.id_rarity}</strong></p>
+                        </div>
+                    </div>
+                `;
+                cardsContainer.appendChild(card);
+            });
+        } catch (error) {
+            console.error("Ошибка загрузки данных:", error);
+        }
+    }
+
+    function getSelectedValues(selectElement) {
+        return Array.from(selectElement.selectedOptions).map(option => option.value);
+    }
+
+    function updateHighlight() {
+        [sinnerSelect, raritySelect].forEach(select => {
+            Array.from(select.options).forEach(option => {
+                if (option.selected) {
+                    option.classList.add("has-selected");
+                } else {
+                    option.classList.remove("has-selected");
+                }
+            });
+        });
+    }
+
+    function resetFilters() {
+        [sinnerSelect, raritySelect].forEach(select => {
+            Array.from(select.options).forEach(option => {
+                option.selected = false;
+                option.classList.remove("has-selected");
+            });
+        });
+    }
+
+    filterBtn.addEventListener("click", () => {
+        const sinners = getSelectedValues(sinnerSelect).join(",");
+        const rarities = getSelectedValues(raritySelect).join(",");
+
+        loadCards({ sinner: sinners, rarity: rarities });
+    });
+
+    [sinnerSelect, raritySelect].forEach(select => {
+        select.addEventListener("change", updateHighlight);
+    });
+
+    resetFilters();
+    loadCards();
+});
+
+    </script>
+
+
+</body>
+</html>
